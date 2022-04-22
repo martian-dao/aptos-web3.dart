@@ -1,63 +1,10 @@
 import 'dart:convert';
-import 'package:hex/hex.dart';
 import 'package:pinenacl/ed25519.dart';
-import 'package:sha3/sha3.dart';
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'account_client.dart';
+import 'utils.dart';
 
-const testUrl = "https://fullnode.devnet.aptoslabs.com";
-const faucetUrl = "https://faucet.devnet.aptoslabs.com";
-
-// Timer setTimeout(callback, [int duration = 1000]) {
-//   return Timer(Duration(milliseconds: duration), callback);
-// }
-
-class Account {
-  var signingKey = SigningKey.generate();
-
-  Account();
-  Account.fromSeed(Uint8List seed) {
-    // signingKey = Signature.keyPair_fromSeed(seed);
-    signingKey = SigningKey(seed: seed);
-  }
-
-  String address() {
-    return authKey();
-  }
-
-  String authKey() {
-    var k = SHA3(256, SHA3_PADDING, 256);
-    k.update(signingKey.publicKey);
-    k.update(utf8.encode("\x00"));
-    var hash = k.digest();
-    return HEX.encode(hash);
-  }
-
-  String pubKey() {
-    return HEX.encode(signingKey.publicKey);
-  }
-}
-
-class FaucetClient {
-  var uri = faucetUrl;
-  RestClient restClient = RestClient();
-  FaucetClient({endpoint = faucetUrl}) {
-    uri = endpoint;
-  }
-  fundAccount(String authKey, int amount) async {
-    var url = "$uri/mint?amount=$amount&auth_key=$authKey";
-    final response = await http.post(Uri.parse(url));
-    if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
-    }
-
-    final tnxHashes = jsonDecode(response.body);
-    for (final tnxHash in tnxHashes) {
-      await restClient.waitForTransaction(tnxHash);
-    }
-  }
-}
 
 class RestClient {
   var uri = testUrl;
@@ -206,56 +153,5 @@ class RestClient {
     final signedTxn = await signTransaction(accountFrom, txnRequest);
     final res = await submitTransaction(accountFrom, signedTxn);
     return res["hash"].toString();
-  }
-}
-
-class WalletClient {
-  FaucetClient faucetClient = FaucetClient();
-  RestClient restClient = RestClient();
-
-  getAccountFromMnemonic(code) {
-    if (!bip39.validateMnemonic(code)) {
-      throw Exception("Invalid mnemonic");
-    }
-    var seed = bip39.mnemonicToSeed(code);
-    var account = Account.fromSeed(seed.sublist(0, 32));
-
-    return account;
-  }
-
-  Future<Map> createWallet() async {
-    var code = bip39.generateMnemonic();
-    Account account = getAccountFromMnemonic(code);
-    await faucetClient.fundAccount(account.authKey(), 10);
-    return {"code": code, "address": account.address()};
-  }
-
-  Future<Map> importWallet(String code) async {
-    Account account = getAccountFromMnemonic(code);
-    faucetClient.fundAccount(account.authKey(), 10);
-    return {"address": account.address()};
-  }
-
-  Future<int> getBalance(String address) async {
-    var balance = await restClient.accountBalance(address);
-    return balance;
-  }
-
-  Future<void> airdrop(String code, int amount) async {
-    Account account = getAccountFromMnemonic(code);
-    await faucetClient.fundAccount(account.authKey(), amount);
-  }
-
-  Future<void> transfer(String code, String recipientAddress, int amount) async {
-    Account account = getAccountFromMnemonic(code);
-    await restClient.transfer(account, recipientAddress, amount);
-  }
-
-  getSentEvents(String address) async {
-    return await restClient.accountSentEvents(address);
-  }
-
-  getReceivedEvents(String address) async {
-    return await restClient.accountReceivedEvents(address);
   }
 }

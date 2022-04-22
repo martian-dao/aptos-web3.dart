@@ -3,4 +3,5 @@
 /// More dartdocs go here.
 library martian_aptos_dart;
 
-export 'src/martiandao_aptos_web3_base.dart';
+export 'src/wallet_client.dart';
+// export 'src/utils.dart';
