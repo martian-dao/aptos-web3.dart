@@ -56,5 +56,4 @@ void main() async {
   await wal.offerNFT(det['code'], alice['address'], det['address'], collectionName, tokenName, 1);
   await wal.claimNFT(alice['code'], det['address'], det['address'], collectionName, tokenName);
   print("Transfer Completed");
-
 }
