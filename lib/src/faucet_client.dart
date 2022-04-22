@@ -6,9 +6,13 @@ import 'utils.dart';
 
 class FaucetClient {
   var uri = faucetUrl;
-  RestClient restClient = RestClient();
+  static RestClient _restClient = RestClient();
   FaucetClient({endpoint = faucetUrl}) {
     uri = endpoint;
+  }
+  FaucetClient.fromRestClient(RestClient restClient, {endpoint = faucetUrl}) {
+    uri = endpoint;
+    _restClient = restClient;
   }
   fundAccount(String authKey, int amount) async {
     var url = "$uri/mint?amount=$amount&auth_key=$authKey";
@@ -19,7 +23,7 @@ class FaucetClient {
 
     final tnxHashes = jsonDecode(response.body);
     for (final tnxHash in tnxHashes) {
-      await restClient.waitForTransaction(tnxHash);
+      await _restClient.waitForTransaction(tnxHash);
     }
   }
 }
