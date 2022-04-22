@@ -14,11 +14,9 @@ const faucetUrl = "https://faucet.devnet.aptoslabs.com";
 // }
 
 class Account {
-  // KeyPair signingKey = Signature.keyPair();
   var signingKey = SigningKey.generate();
 
   Account();
-
   Account.fromSeed(Uint8List seed) {
     // signingKey = Signature.keyPair_fromSeed(seed);
     signingKey = SigningKey(seed: seed);
@@ -29,8 +27,9 @@ class Account {
   }
 
   String authKey() {
-    var k = SHA3(256, KECCAK_PADDING, 256);
+    var k = SHA3(256, SHA3_PADDING, 256);
     k.update(signingKey.publicKey);
+    k.update(utf8.encode("\x00"));
     var hash = k.digest();
     return HEX.encode(hash);
   }
@@ -74,7 +73,7 @@ class RestClient {
       assert(response.statusCode == 200, response.body);
     }
 
-    jsonDecode(response.body);
+    return jsonDecode(response.body);
   }
 
   accountResources(String accountAddress) async {
@@ -95,7 +94,7 @@ class RestClient {
       assert(response.statusCode == 200, response.body);
     }
 
-    jsonDecode(response.body);
+    return jsonDecode(response.body);
   }
 
   accountReceivedEvents(String accountAddress) async {
@@ -106,7 +105,7 @@ class RestClient {
       assert(response.statusCode == 200, response.body);
     }
 
-    jsonDecode(response.body);
+    return jsonDecode(response.body);
   }
 
   generateTransaction(String sender, Map payload) async {
@@ -128,7 +127,10 @@ class RestClient {
 
   signTransaction(Account accountFrom, Map txnRequest) async {
     var url = "$uri/transactions/signing_message";
-    final response = await http.post(Uri.parse(url), body: txnRequest);
+    JsonEncoder jsonEncoder = JsonEncoder();
+    final response = await http.post(Uri.parse(url), headers: {
+      "Content-Type": "application/json"
+    } ,body: jsonEncoder.convert(txnRequest));
     if (response.statusCode != 200) {
       assert(response.statusCode == 200, response.body);
     }
@@ -138,7 +140,7 @@ class RestClient {
     final signatureHex = hex.encode(signature).substring(0, 128);
     txnRequest["signature"] = {
       "type": "ed25519_signature",
-      "public_key": '0x$accountFrom.pubKey()',
+      "public_key": '0x${accountFrom.pubKey()}',
       "signature": '0x$signatureHex',
     };
     return txnRequest;
@@ -146,9 +148,12 @@ class RestClient {
 
   submitTransaction(Account accountFrom, Map txnRequest) async {
     var url = "$uri/transactions";
-    final response = await http.post(Uri.parse(url), body: txnRequest);
+    JsonEncoder jsonEncoder = JsonEncoder();
+    final response = await http.post(Uri.parse(url), headers: {
+      "Content-Type": "application/json"
+    } ,body: jsonEncoder.convert(txnRequest));
     if (response.statusCode != 202) {
-      assert(response.statusCode == 202, '$response.body-$txnRequest');
+      assert(response.statusCode == 202, '$response.body');
     }
     return jsonDecode(response.body);
   }
@@ -170,7 +175,6 @@ class RestClient {
     while (await transactionPending(txnHash)) {
       assert(count < 10);
       await Future.delayed(Duration(seconds: 1));
-      print(count);
       count += 1;
       if (count >= 10) {
         throw Exception('Waiting for transaction $txnHash timed out!');
@@ -198,8 +202,7 @@ class RestClient {
         amount.toString(),
       ]
     };
-    final txnRequest =
-        await generateTransaction(accountFrom.address(), payload);
+    final txnRequest = await generateTransaction(accountFrom.address(), payload);
     final signedTxn = await signTransaction(accountFrom, txnRequest);
     final res = await submitTransaction(accountFrom, signedTxn);
     return res["hash"].toString();
@@ -209,6 +212,7 @@ class RestClient {
 class WalletClient {
   FaucetClient faucetClient = FaucetClient();
   RestClient restClient = RestClient();
+
   getAccountFromMnemonic(code) {
     if (!bip39.validateMnemonic(code)) {
       throw Exception("Invalid mnemonic");
@@ -237,8 +241,21 @@ class WalletClient {
     return balance;
   }
 
-  airdrop(String code, int amount) async {
+  Future<void> airdrop(String code, int amount) async {
     Account account = getAccountFromMnemonic(code);
     await faucetClient.fundAccount(account.authKey(), amount);
+  }
+
+  Future<void> transfer(String code, String recipientAddress, int amount) async {
+    Account account = getAccountFromMnemonic(code);
+    await restClient.transfer(account, recipientAddress, amount);
+  }
+
+  getSentEvents(String address) async {
+    return await restClient.accountSentEvents(address);
+  }
+
+  getReceivedEvents(String address) async {
+    return await restClient.accountReceivedEvents(address);
   }
 }
