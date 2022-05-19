@@ -55,11 +55,17 @@ void main() async {
   const uri = "https://aptos.dev";
   const img = "https://aptos.dev/img/nyan.jpeg";
 
-  print("Creating Collection: \nDescription -> $description \nName -> $collectionName \nURI -> $uri");
+  print("\nCreating Collection: \nDescription -> $description \nName -> $collectionName \nURI -> $uri");
   print(await wal.createNFTCollection(det['code'], collectionName, description, uri));
 
-  print("Creating NFT Token: image url -> $img, TokenName -> $tokenName");
+  print("\nCreating NFT Token: image url -> $img, TokenName -> $tokenName");
   print(await wal.createNFT(det['code'], collectionName, tokenName, description, 1, img));
+
+  print("\n\nGetting all NFTs");
+  print(await wal.getTokens(det['address']));
+
+  print("\n\nGetting single NFT");
+  print(await wal.getToken(det['address'], collectionName, tokenName));
 
   print("\n\nTransfer NFT");
   await wal.offerNFT(det['code'], alice['address'], det['address'], collectionName, tokenName, 1);

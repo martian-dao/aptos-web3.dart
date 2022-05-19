@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:bip39/bip39.dart' as bip39;
@@ -104,4 +105,60 @@ class WalletClient {
 
     return await tokenClient.submitTransactionHelper(account, payload);
   }
+
+    getTokenIds(String address) async {
+      var depositEvents = await restClient.getEventStream(address, "0x1::Token::TokenStore", "deposit_events");
+      // var withdrawEvents = await restClient.getEventStream(address, "0x1::Token::TokenStore", "withdraw_events");
+       var tokenIds = [];
+        for (var elem in depositEvents) {
+            tokenIds.add(elem["data"]["id"]);
+        }
+        
+        return tokenIds; 
+    }
+
+    getTokens(String address) async {
+        var tokenIds = await getTokenIds(address);
+        var tokens = [];
+        for (var tokenId in tokenIds) {
+            var resources = await restClient.accountResources(tokenId["creator"]);
+            var accountResource = resources.where((r) => r["type"] == "0x1::Token::Collections");
+            var token = await restClient.tableItem(
+                accountResource.first["data"]["token_data"]["handle"],
+                "0x1::Token::TokenId",
+                "0x1::Token::TokenData",
+                tokenId,
+            );
+            tokens.add(token);
+        }
+        return tokens;        
+    }
+
+    getToken(String creator, String collectionName, String tokenName) async {
+        var resources = await restClient.accountResources(creator);
+        var accountResource = resources.where((r) => r["type"] == "0x1::Token::Collections");
+        var token = await restClient.tableItem(
+            accountResource.first["data"]["token_data"]["handle"],
+            "0x1::Token::TokenId",
+            "0x1::Token::TokenData",
+            {
+              "creator": creator,
+              "collection": collectionName,
+              "name": tokenName
+            },
+        );
+        return token;      
+    }
+
+    getCollection(String address, String collectionName) async {
+        var resources = await restClient.accountResources(address);
+        var accountResource = resources.where((r) => r["type"] == "0x1::Token::Collections");
+        var collection = await restClient.tableItem(
+            accountResource.first["data"]["token_data"]["handle"],
+            "0x1::ASCII::String",
+            "0x1::Token::Collection",
+            collectionName,
+        );
+        return collection;    
+    }
 }

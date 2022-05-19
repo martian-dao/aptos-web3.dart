@@ -172,4 +172,14 @@ class RestClient {
       return jsonDecode(response.body);
     }
   }
+
+  getEventStream(String address, String eventHandleStruct, String fieldName) async {
+        var url =
+        "$uri/accounts/$address/events/$eventHandleStruct/$fieldName";
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 404) {
+          return [];
+        }
+        return jsonDecode(response.body);
+    }
 }
