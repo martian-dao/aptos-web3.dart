@@ -58,25 +58,23 @@ class WalletClient {
   }
 
   createNFTCollection(
-      String code, String description, String name, String uri) async {
+      String code, String name, String description, String uri) async {
     Account account = getAccountFromMnemonic(code);
-    return await tokenClient.createCollection(account, description, name, uri);
+    return await tokenClient.createCollection(account, name, description, uri);
   }
 
-  createNFT(String code, String collectionName, String description, String name,
+  createNFT(String code, String collectionName, String name, String description,
       int supply, String uri) async {
     Account account = getAccountFromMnemonic(code);
     return await tokenClient.createToken(
-        account, collectionName, description, name, supply, uri);
+        account, collectionName, name, description, supply, uri);
   }
 
   offerNFT(String code, String receiverAddress, String creatorAddress,
       String collectionName, String tokenName, int amount) async {
     Account account = getAccountFromMnemonic(code);
-    var tokenId =
-        await tokenClient.getTokenId(creatorAddress, collectionName, tokenName);
     return await tokenClient.offerToken(
-        account, receiverAddress, creatorAddress, tokenId, amount);
+        account, receiverAddress, creatorAddress, collectionName,tokenName,amount);
   }
 
   cancelNFTOffer(String code, String receiverAddress, String creatorAddress,
@@ -90,9 +88,7 @@ class WalletClient {
   claimNFT(String code, String senderAddress, String creatorAddress,
       String collectionName, String tokenName) async {
     Account account = getAccountFromMnemonic(code);
-    var tokenId =
-        await tokenClient.getTokenId(creatorAddress, collectionName, tokenName);
-    return await tokenClient.claimToken(account, senderAddress, creatorAddress, tokenId);
+    return await tokenClient.claimToken(account, senderAddress, creatorAddress, collectionName, tokenName);
   }
 
   signGenericTransaction(String code, String functionName, List<String> args) async {

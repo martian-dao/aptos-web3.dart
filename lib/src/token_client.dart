@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:hex/hex.dart';
 import 'package:martiandao_aptos_web3/src/account_client.dart';
 import 'package:martiandao_aptos_web3/src/rest_client.dart';
@@ -21,99 +22,106 @@ class TokenClient {
   }
 
   createCollection(
-      Account account, String description, String name, String uri) async {
+      Account account, String name, String description, String uri) async {
     final payload = {
       "type": "script_function_payload",
       "function": "0x1::Token::create_unlimited_collection_script",
       "type_arguments": [],
       "arguments": [
-        HEX.encode(utf8.encode(description)),
         HEX.encode(utf8.encode(name)),
+        HEX.encode(utf8.encode(description)),
         HEX.encode(utf8.encode(uri))
       ]
     };
     return await submitTransactionHelper(account, payload);
   }
 
-  createToken(Account account, String collectionName, String description,
-      String name, int supply, String uri) async {
+  createToken(Account account, String collectionName, String name,
+      String description, int supply, String uri) async {
     final payload = {
-          "type": "script_function_payload",
-          "function": "0x1::Token::create_token_script",
-          "type_arguments": [],
-          "arguments": [
-            HEX.encode(utf8.encode(collectionName)),
-            HEX.encode(utf8.encode(description)),
-            HEX.encode(utf8.encode(name)),
-            supply.toString(),
-            HEX.encode(utf8.encode(uri))
-          ]
+      "type": "script_function_payload",
+      "function": "0x1::Token::create_limited_token_script",
+      "type_arguments": [],
+      "arguments": [
+        HEX.encode(utf8.encode(collectionName)),
+        HEX.encode(utf8.encode(name)),
+        HEX.encode(utf8.encode(description)),
+        true,
+        supply.toString(),
+        (supply + 1).toString(),
+        HEX.encode(utf8.encode(uri))
+      ]
     };
     return await submitTransactionHelper(account, payload);
   }
 
-  offerToken(Account account, String receiver, String creator, int tokenCollectionNum, int amount) async {
+  offerToken(Account account, String receiver, String creator,
+      String collectionName, String tokenName, int amount) async {
     final payload = {
-          "type": "script_function_payload",
-          "function": "0x1::TokenTransfers::offer_script",
-          "type_arguments": [],
-          "arguments": [
-            receiver,
-            creator,
-            tokenCollectionNum.toString(),
-            amount.toString()
-          ]
+      "type": "script_function_payload",
+      "function": "0x1::TokenTransfers::offer_script",
+      "type_arguments": [],
+      "arguments": [
+        receiver,
+        creator,
+        HEX.encode(utf8.encode(collectionName)),
+        HEX.encode(utf8.encode(tokenName)),
+        amount.toString()
+      ]
     };
     return await submitTransactionHelper(account, payload);
   }
 
-  claimToken(Account account, String sender, String creator, int tokenCollectionNum) async {
+  claimToken(Account account, String sender, String creator,
+      String collectionName, String tokenName) async {
     final payload = {
-          "type": "script_function_payload",
-          "function": "0x1::TokenTransfers::claim_script",
-          "type_arguments": [],
-          "arguments": [
-            sender,
-            creator,
-            tokenCollectionNum.toString()
-          ]
+      "type": "script_function_payload",
+      "function": "0x1::TokenTransfers::claim_script",
+      "type_arguments": [],
+      "arguments": [
+        sender,
+        creator,
+        HEX.encode(utf8.encode(collectionName)),
+        HEX.encode(utf8.encode(tokenName))
+      ]
     };
     return await submitTransactionHelper(account, payload);
   }
 
-  cancelTokenOffer(Account account, String receiver, String creator, int tokenCollectionNum) async {
+  cancelTokenOffer(Account account, String receiver, String creator,
+      int tokenCollectionNum) async {
     final payload = {
-          "type": "script_function_payload",
-          "function": "0x1::TokenTransfers::cancel_offer_script",
-          "type_arguments": [],
-          "arguments": [
-            receiver,
-            creator,
-            tokenCollectionNum.toString()
-          ]
+      "type": "script_function_payload",
+      "function": "0x1::TokenTransfers::cancel_offer_script",
+      "type_arguments": [],
+      "arguments": [receiver, creator, tokenCollectionNum.toString()]
     };
     return await submitTransactionHelper(account, payload);
   }
 
   getTokenId(String creator, String collectionName, String tokenName) async {
-      final resources = await _restClient.accountResources(creator);
-      var collections = [];
-      var tokens = [];
-      for (var resource in resources) {
-          if (resource["type"] == "0x1::Token::Collections") {
-              collections = resource["data"]["collections"]["data"];
-          }
-      } 
-      for (var collection in collections) {
-          if (collection["key"] == collectionName) {
-              tokens = collection["value"]["tokens"]["data"];
-          }
+    final resources = await _restClient.accountResources(creator);
+    dynamic collections;
+    for (var resource in resources) {
+      if (resource["type"] == "0x1::Token::Collections") {
+        collections = await _restClient.tableItem(
+          resource["data"]["collections"]["handle"],
+          "0x1::ASCII::String",
+          "0x1::Token::Collection",
+          collectionName,
+        );
+        break;
       }
-      for (var token in tokens) {
-          if (token["key"] == tokenName) {
-              return int.parse(token["value"]["id"]["creation_num"]);
-          }
-      }
-      assert(false);
+    }
+
+      var tokenData = await _restClient.tableItem(
+        collections["tokens"]["handle"],
+        "0x1::ASCII::String",
+        "0x1::Token::TokenData",
+        tokenName,
+      );
+
+      return tokenData["id"]["creation_num"];
   }
+
 }

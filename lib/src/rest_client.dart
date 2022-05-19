@@ -5,7 +5,6 @@ import 'dart:async';
 import 'account_client.dart';
 import 'utils.dart';
 
-
 class RestClient {
   var uri = testUrl;
   final hex = HexCoder.instance;
@@ -75,9 +74,9 @@ class RestClient {
   signTransaction(Account accountFrom, Map txnRequest) async {
     var url = "$uri/transactions/signing_message";
     JsonEncoder jsonEncoder = JsonEncoder();
-    final response = await http.post(Uri.parse(url), headers: {
-      "Content-Type": "application/json"
-    } ,body: jsonEncoder.convert(txnRequest));
+    final response = await http.post(Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncoder.convert(txnRequest));
     if (response.statusCode != 200) {
       assert(response.statusCode == 200, response.body);
     }
@@ -96,9 +95,9 @@ class RestClient {
   submitTransaction(Account accountFrom, Map txnRequest) async {
     var url = "$uri/transactions";
     JsonEncoder jsonEncoder = JsonEncoder();
-    final response = await http.post(Uri.parse(url), headers: {
-      "Content-Type": "application/json"
-    } ,body: jsonEncoder.convert(txnRequest));
+    final response = await http.post(Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncoder.convert(txnRequest));
     if (response.statusCode != 202) {
       assert(response.statusCode == 202, '$response.body');
     }
@@ -149,9 +148,28 @@ class RestClient {
         amount.toString(),
       ]
     };
-    final txnRequest = await generateTransaction(accountFrom.address(), payload);
+    final txnRequest =
+        await generateTransaction(accountFrom.address(), payload);
     final signedTxn = await signTransaction(accountFrom, txnRequest);
     final res = await submitTransaction(accountFrom, signedTxn);
     return res["hash"].toString();
+  }
+
+  tableItem(
+      String handle, String keyType, String valueType, dynamic key) async {
+    var url = "$uri/tables/$handle/item";
+    JsonEncoder jsonEncoder = JsonEncoder();
+    final response = await http.post(Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncoder.convert(
+            {"key_type": keyType, "value_type": valueType, "key": key}));
+
+    if (response.statusCode == 404) {
+      return null;
+    } else if (response.statusCode != 200) {
+      assert(response.statusCode == 200, response.body);
+    } else {
+      return jsonDecode(response.body);
+    }
   }
 }
