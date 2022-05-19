@@ -15,6 +15,11 @@ void main() async {
   print("Wallet Created $alice");  
   print("Current balance ${await wal.getBalance(alice['address'])}");
 
+
+  print("\Importing wallet test");  
+  final temp = await wal.importWallet(alice['code']);
+  print(temp);
+
   print("\nAirdropping 12000 coins to alice");
   await wal.airdrop(det['code'], 12000);
   print("Updated balance alice ${await wal.getBalance(det['address'])}");

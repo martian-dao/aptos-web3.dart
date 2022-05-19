@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:martiandao_aptos_web3/src/token_client.dart';
 import 'dart:async';
@@ -27,10 +29,10 @@ class WalletClient {
     return {"code": code, "address": account.address()};
   }
 
-  Future<Map> importWallet(String code) async {
+  dynamic importWallet(String code) async {
     Account account = getAccountFromMnemonic(code);
     faucetClient.fundAccount(account.authKey(), 10);
-    return {"address": account.address()};
+    return [{"address": account.address()}];
   }
 
   Future<int> getBalance(String address) async {
