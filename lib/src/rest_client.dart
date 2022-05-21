@@ -131,7 +131,7 @@ class RestClient {
   accountBalance(String accountAddress) async {
     final resources = await accountResources(accountAddress);
     for (final resource in resources) {
-      if (resource["type"] == "0x1::TestCoin::Balance") {
+      if (resource["type"] == "0x1::Coin::CoinStore<0x1::TestCoin::TestCoin>") {
         return int.parse(resource["data"]["coin"]["value"]);
       }
     }
@@ -141,8 +141,8 @@ class RestClient {
   transfer(Account accountFrom, String recipient, int amount) async {
     final payload = {
       "type": "script_function_payload",
-      "function": "0x1::TestCoin::transfer",
-      "type_arguments": [],
+      "function": "0x1::Coin::transfer",
+      "type_arguments": ["0x1::TestCoin::TestCoin"],
       "arguments": [
         '0x$recipient',
         amount.toString(),
