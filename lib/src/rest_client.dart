@@ -16,7 +16,7 @@ class RestClient {
     var url = "$uri/accounts/$accountAddress";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     }
 
     return jsonDecode(response.body);
@@ -26,7 +26,7 @@ class RestClient {
     var url = "$uri/accounts/$accountAddress/resources";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     }
 
     return jsonDecode(response.body);
@@ -37,7 +37,7 @@ class RestClient {
         "$uri/accounts/$accountAddress/events/0x1::TestCoin::TransferEvents/sent_events";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     }
 
     return jsonDecode(response.body);
@@ -48,7 +48,7 @@ class RestClient {
         "$uri/accounts/$accountAddress/events/0x1::TestCoin::TransferEvents/received_events";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     }
 
     return jsonDecode(response.body);
@@ -78,7 +78,7 @@ class RestClient {
         headers: {"Content-Type": "application/json"},
         body: jsonEncoder.convert(txnRequest));
     if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     }
     var result = jsonDecode(response.body);
     var toSign = hex.decode(result['message'].substring(2));
@@ -111,7 +111,7 @@ class RestClient {
       return true;
     }
     if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     }
     return jsonDecode(response.body)['type'] == "pending_transaction";
   }
@@ -167,7 +167,7 @@ class RestClient {
     if (response.statusCode == 404) {
       return null;
     } else if (response.statusCode != 200) {
-      assert(response.statusCode == 200, response.body);
+      throw Exception(jsonDecode(response.body));
     } else {
       return jsonDecode(response.body);
     }
