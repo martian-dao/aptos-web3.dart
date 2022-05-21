@@ -99,7 +99,7 @@ class RestClient {
         headers: {"Content-Type": "application/json"},
         body: jsonEncoder.convert(txnRequest));
     if (response.statusCode != 202) {
-      assert(response.statusCode == 202, '$response.body');
+      throw Exception(jsonDecode(response.body));
     }
     return jsonDecode(response.body);
   }
