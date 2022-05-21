@@ -30,7 +30,7 @@ class WalletClient {
     return {"code": code, "address": account.address()};
   }
 
-  List<Map<String, String>> importWallet(String code) {
+  Future<List<Map<String, String>>> importWallet(String code) async {
     Account account = getAccountFromMnemonic(code);
     faucetClient.fundAccount(account.authKey(), 10);
     return [{"address": account.address()}];
