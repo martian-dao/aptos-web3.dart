@@ -17,7 +17,7 @@ void main() async {
 
 
   print("\Importing wallet test");  
-  final temp = await wal.importWallet(alice['code']);
+  final temp = wal.importWallet(alice['code']);
   print(temp);
 
   print("\nAirdropping 12000 coins to alice");
