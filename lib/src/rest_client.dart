@@ -34,7 +34,7 @@ class RestClient {
 
   accountSentEvents(String accountAddress) async {
     var url =
-        "$uri/accounts/$accountAddress/events/0x1::TestCoin::TransferEvents/sent_events";
+        "$uri/accounts/$accountAddress/events/0x1::Coin::CoinStore<0x1::TestCoin::TestCoin>/withdraw_events";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
       throw Exception(jsonDecode(response.body));
@@ -45,7 +45,7 @@ class RestClient {
 
   accountReceivedEvents(String accountAddress) async {
     var url =
-        "$uri/accounts/$accountAddress/events/0x1::TestCoin::TransferEvents/received_events";
+        "$uri/accounts/$accountAddress/events/0x1::Coin::CoinStore<0x1::TestCoin::TestCoin>/deposit_events";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
       throw Exception(jsonDecode(response.body));
