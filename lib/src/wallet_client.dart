@@ -24,6 +24,8 @@ class WalletClient {
   // ignore: non_constant_identifier_names
   static final ADDRESS_GAP = 10;
 
+  Map<String, Account> accountCache = {};
+
   getAccountFromMnemonic(code) {
     if (!bip39.validateMnemonic(code)) {
       throw Exception("Invalid mnemonic");
@@ -39,10 +41,17 @@ class WalletClient {
     if (!bip39.validateMnemonic(code)) {
       throw Exception("Invalid mnemonic");
     }
+    var cacheKey = "${metaData['address']}-${metaData['derivationPath']}";
+    if(accountCache.containsKey(cacheKey)){
+      print("getting account form cache");
+      return accountCache[cacheKey];
+    }
+
     var seed = bip39.mnemonicToSeed(code);
     BIP32 node = BIP32.fromSeed(seed);
     BIP32 exKey = node.derivePath(metaData['derivationPath']);
     var account = Account.fromSeed(exKey.privateKey!, metaData['address']);
+    accountCache[cacheKey] = account;
     return account;
   }
 
