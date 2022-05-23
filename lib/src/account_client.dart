@@ -5,15 +5,22 @@ import 'package:sha3/sha3.dart';
 
 class Account {
   var signingKey = SigningKey.generate();
+  // ignore: prefer_typing_uninitialized_variables
+  var accountAddress;
 
   Account();
-  Account.fromSeed(Uint8List seed) {
+  Account.fromSeed(Uint8List seed, [String address=""]) {
     // signingKey = Signature.keyPair_fromSeed(seed);
     signingKey = SigningKey(seed: seed);
+    if (address != "") {
+      accountAddress = address;
+    } else {
+      accountAddress = authKey();
+    }
   }
 
   String address() {
-    return authKey();
+    return accountAddress;
   }
 
   String authKey() {
