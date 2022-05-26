@@ -212,6 +212,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "qr",
+      "rootUri": "file:///Users/innodeed/.pub-cache/hosted/pub.dartlang.org/qr-3.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.16"
+    },
+    {
       "name": "sha3",
       "rootUri": "file:///Users/innodeed/.pub-cache/hosted/pub.dartlang.org/sha3-0.2.0",
       "packageUri": "lib/",
@@ -344,7 +350,7 @@
       "languageVersion": "2.16"
     }
   ],
-  "generated": "2022-05-22T08:56:33.117338Z",
+  "generated": "2022-05-24T17:01:17.156893Z",
   "generator": "pub",
   "generatorVersion": "2.16.2"
 }

@@ -11,6 +11,7 @@ import 'account_client.dart';
 import 'faucet_client.dart';
 import 'rest_client.dart';
 import 'utils.dart';
+import 'package:qr/qr.dart';
 
 class WalletClient {
   static RestClient restClient = RestClient();
@@ -42,7 +43,7 @@ class WalletClient {
       throw Exception("Invalid mnemonic");
     }
     var cacheKey = "${metaData['address']}-${metaData['derivationPath']}";
-    if(accountCache.containsKey(cacheKey)){
+    if (accountCache.containsKey(cacheKey)) {
       print("getting account form cache");
       return accountCache[cacheKey];
     }
@@ -149,7 +150,6 @@ class WalletClient {
     return await signGenericTransaction(
         account, "0x1::Account::rotate_authentication_key", [newAuthKey]);
   }
-
 
   Future<int> getBalance(String address) async {
     var balance = await restClient.accountBalance(address);
@@ -270,5 +270,14 @@ class WalletClient {
       collectionName,
     );
     return collection;
+  }
+
+  getJsonPayload(
+      String recipientAddress, String amount, String contractAddress) async {
+    return jsonEncode({
+      "recipientAddress": recipientAddress,
+      "amount": amount,
+      "contractAddress": contractAddress
+    });
   }
 }

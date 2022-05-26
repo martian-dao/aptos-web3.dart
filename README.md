@@ -122,15 +122,28 @@ void main() async {
   await wal.claimNFT(aliceAccount,aliceAddress, aliceAddress, collectionName, tokenName);
   print("Transfer Completed");
 
+  print("\nTesting cache");
+  dynamic cacheAliceAccount = wal.getAccountFromMetaData(alice['code'], alice['accounts'][0]);
+  print("\nAirdropping 12000 coins to alice using cached account");
+  await wal.airdrop(cacheAliceAccount, 12000);
+  print("Updated balance alice ${await wal.getBalance(aliceAddress)}");
+
+
   print("\nRotating auth key of alice");
   print("=========================================================================");
   print(await wal.rotateAuthKey(alice['code'], alice['accounts'][0]));
 
+  print("Getting JSON payload");
+  print("=========================================================================");
+  // String recipientAddress, String amount, String contractAddress
+  // NOTE: Here contract address is not correct it is just for testing
+  print(await wal.getJsonPayload(aliceAccount, "1000", aliceAccount));
+
   print("\nTransferring 1000 from $aliceAddress (alice) -> $bobAddress (bob) SHOULD THROW EXCEPTION: INVALID_AUTH_KEY");
   print("=========================================================================");
   await wal.transfer(aliceAccount, bobAddress, 1000);
-
 }
+
 ```
 
 # To install dependencies and run example
